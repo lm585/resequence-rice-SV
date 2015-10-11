@@ -1,0 +1,60 @@
+
+==> 44bp-size-std-max <==
+NIV_105327_L.pair.sam   211     10      276
+NIV_106105_L.pair.sam   190     9       253
+NIV_106154_L.pair.sam   217     9       277
+NIV_80470_L.pair.sam    236     8       289
+NIV_89215_L.pair.sam    213     9       275
+
+==> rice.len <==
+1       Chr1    43270923
+2       Chr2    35937250
+3       Chr3    36413819
+4       Chr4    35502694
+5       Chr5    29958434
+6       Chr6    31248787
+7       Chr7    29697621
+8       Chr8    28443022
+9       Chr9    23012720
+10      Chr10   23207287
+11      Chr11   29021106
+12      Chr12   27531856
+13      ChrUn   633585
+14      ChrSy   592136
+15      chrC|11562      134525
+16      chrM|11706      490520
+17      chrX    123456
+
+==> sv.conf <==
+<general>
+input_format = sam
+sv_type = all
+mates_orientation=FR
+read1_length=80
+read2_length=80
+mates_file=1.pair.noDup.ab.mapQgt16.sam
+cmap_file=rice.len
+output_dir=dir-sv-NIV-1
+</general>
+
+<detection>
+window_size=959
+step_length=240
+#mates_file_ref=sample_norm_mates.sam
+</detection>
+
+<filtering>
+chromosomes=-chrX
+strand_filtering=1
+order_filtering=1
+insert_size_filtering=1
+nb_pairs_threshold=3
+nb_pairs_order_threshold=2
+indel_sigma_threshold=6
+dup_sigma_threshold=6
+singleton_sigma_threshold=6
+final_score_threshold=0.8
+mu_length=464
+sigma_length=11
+</filtering>
+
