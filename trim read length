@@ -2,4 +2,6 @@
 # sometimes, PE insert size is 180, read length is 100, no breakpoint,  SVDetect cannot find SVs or find a small # of
 # SVs.
 # trim read from 100bp -> 80bp (beginning at position 0)
+# NIV_106105_L.pair.sam	189	9  (avg = 189, std = 9, readLength = 100)
+# 
 fastq-trim-to-n-bp RUF_105958_L_2.sanger 80 RUF_105958_L_2.80bp.sanger
