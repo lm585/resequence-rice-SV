@@ -1,0 +1,36 @@
+if test $# != 4
+  then
+    echo $0 "line-number(1)  abn.simple  abn.sam.sort.byID    norm.sorted.bam "
+    exit 1
+fi
+
+###abnormal pair pileup
+awk 'NR == '$1''     $2   > temp525
+procMulti-getReadName temp525 out | sort | uniq > temp525-sorted-uniq
+getSam-ID  temp525-sorted-uniq $3 > temp.sam  #### abnorm sam
+samtools view -u -S  -t /home/linyong/data-link/rice-v7-all-chro-mito.con.fai     -o temp.bam temp.sam
+samtools sort temp.bam temp.sorted
+samtools mpileup  -Q 0 -d 1000000 -A -f   /home/linyong/data-link/rice-v7-all-chro-mito.con  temp.sorted.bam > temp.pileup
+
+### normal PE pileup file
+regions=`awk '{print $1 ":" $2 "-" $3 "\t" $4 ":" $5 "-" $6}' temp525`
+samtools view -b -o temp-norm-PE.bam  $4 $regions
+samtools sort temp-norm-PE.bam temp-norm-PE.sorted
+samtools mpileup  -Q 0 -d 1000000 -f  /home/linyong/data-link/rice-v7-all-chro-mito.con  temp-norm-PE.sorted.bam > temp-norm-PE.pileup
+
+### compare two pilefiles
+combine2PileFiles temp-norm-PE.pileup temp.pileup 0.9 0.8   /home/linyong/data-link/rice-chr-in-order  2
+
+###
+snp=`wc -l temp-norm-PE.pileup_temp.pileup.snp |  sed 's/ .*//' `
+if [ "$snp" -gt 0 ]
+then
+  echo -n "line-number  $1      "
+  head -1 temp525 | cut -f 1-7,9-10,17-30
+  cat temp-norm-PE.pileup_temp.pileup.snp
+### no snp
+else
+  cat temp525 >> sv-link-kept
+fi
+
+
