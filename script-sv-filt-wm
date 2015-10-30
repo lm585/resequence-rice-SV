@@ -1,0 +1,62 @@
+### ll
+
+if test $# != 2
+  then
+    echo $0  "sample-name(G9) read-length(may be trimmed)"
+    exit 1
+fi
+
+awk 'BEGIN {FS = "\t"} $17 == "DELETION" && $5 - $3 > 5'  $1.pair.noDup.ab.mapQgt16.sam.links.filtered  > temp
+awk 'BEGIN {FS = "\t"} $17 == "INSERTION" && $5 - $3 > 0'  $1.pair.noDup.ab.mapQgt16.sam.links.filtered >> temp
+awk 'BEGIN {FS = "\t"} $17 == "INVERSION" ' $1.pair.noDup.ab.mapQgt16.sam.links.filtered >> temp
+mv temp $1.3sv
+
+awk 'BEGIN {FS = "\t"} $17 == "LARGE_DUPLI" ' $1.pair.noDup.ab.mapQgt16.sam.links.filtered > $1.dup
+procMultiFFF $1.3sv $1.3sv.simple
+procMultiFFF $1.dup $1.dup.simple
+
+rm  $1.3sv  $1.dup
+### no N bewtween two anchor window filter; applicable to all SV types
+# svFilterDelNNNNNN.2 $1.dup.simple /home/linyong/watermelon-102acc/watermelon_v1.genome  410  410 1 0.5  FR  100
+svFilterDelNNNNNN.2  $1.3sv.simple   /home/linyong/data-link/rice-v7-all-chro-mito.con  410  410 1 -0.5  FR $2
+
+# executable SAM-normal-paired-end-input-file  sv-file-simple   normAbnRatio-cutoff(0.25) read-length(80)
+### 2.3G sam file; 1% of memory; 1 min
+# samtools view -o temp  2_FCH9U14ADXX_L1_wHAIPI014969-45.pair.noDup.norm.mapQgt16.bam
+samtools view -o ../$1.pair.noDup.norm.mapQgt16.sam     ../$1.pair.noDup.norm.mapQgt16.bam
+# apply ratio filter Only to insertions
+awk 'BEGIN {FS = "\t"} $17 == "INSERTION" ' $1.3sv.simple.DELnnn.filt > temp-insertion
+awk 'BEGIN {FS = "\t"} $17 != "INSERTION" ' $1.3sv.simple.DELnnn.filt > temp-others
+normal-abnom-ratio-window.2.useMap  ../$1.pair.noDup.norm.mapQgt16.sam   temp-insertion   0.2 $2 # may be trimmed read length
+cat temp-insertion.normPair.filt  temp-others >  $1.3sv.simple.DELnnn.filt.normPair.filt
+rm  ../$1.pair.noDup.norm.mapQgt16.sam   temp-insertion.normPair.filt  temp-insertion temp-others
+
+# used for snp filtering & generating pileup file
+sort -t '       ' +0 -1  ../$1.pair.noDup.ab.mapQgt16.sam > $1.pair.noDup.ab.mapQgt16.sam.sort.byID
+# samtools view -b -S  -t /home/linyong/data-link/rice-v7-all-chro-mito.con.fai  -o $1.pair.noDup.norm.mapQgt16.bam  ../$1.pair.noDup.norm.mapQgt16.sam
+samtools sort ../$1.pair.noDup.norm.mapQgt16.bam $1.pair.noDup.norm.mapQgt16.sorted
+samtools index $1.pair.noDup.norm.mapQgt16.sorted.bam
+
+### snp filtering
+rm  sv-link-kept
+awk '{print "script-sam-pileup-rice-ref", NR, "'$1'.3sv.simple.DELnnn.filt.normPair.filt",     "'$1'.pair.noDup.ab.mapQgt16.sam.sort.byID",   "'$1'.pair.noDup.norm.mapQgt16.sorted.bam"}' $1.3sv.simple.DELnnn.filt.normPair.filt | grep -v "^[   ]*$" > script-snp-filter
+sh -x ./script-snp-filter
+mv sv-link-kept  $1.3sv.simple.DELnnn.filt.normPair.filt.snp.filt
+
+### norm pair in del region filter
+
+samtools mpileup  -Q 0 -d 1000000 -f   /home/linyong/data-link/rice-v7-all-chro-mito.con   $1.pair.noDup.norm.mapQgt16.sorted.bam > $1.norm.pileup
+
+svFilterDelNormPE  $1.3sv.simple.DELnnn.filt.normPair.filt.snp.filt /home/linyong/data-link/rice-v7-all-chro-mito.con    $1.norm.pileup -20  0.05  FR $2  2
+
+# add  translocations
+awk 'BEGIN {FS = "\t"} $17 == "TRANSLOC" || $17 == "INV_TRANSLOC" ' $1.pair.noDup.ab.mapQgt16.sam.links.filtered  > temp
+procMultiFFF temp temp.simple
+cat temp.simple >> $1.3sv.simple.DELnnn.filt.normPair.filt.snp.filt.DELnormPileup.filt
+rm temp temp.simple
+
+# mv  $1.norm.pileup ../$1.pair.noDup.norm.mapQgt16.pileup
+rm chr-*.pileup  *.norm.pileup *.pair.noDup.ab.mapQgt16.sam.sort.byID  *.bai temp*  $1.pair.noDup.norm.mapQgt16.bam    temp temp.simple #  *.bam
+rm  $1.pair.noDup.norm.mapQgt16.sorted.bam
+##### 2280 deletions; 2.3G sam file;3.8G pileup file; 15% memory; 30 min
+##svFilterDelNormPE $1.3sv.simple.DELnnn.filt.normPair.filt.snp.filt /home/linyong/cucumber_reseq_first/cucumber_genome ../$1.pair.noDup.norm.mapQgt16.pileup -1 0.05 FR 90 2 > out-delNormPE-2
