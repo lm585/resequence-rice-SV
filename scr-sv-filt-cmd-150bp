@@ -1,0 +1,7 @@
+#
+cat  pre-names  | while read ll
+do
+  cd dir-sv-$ll
+  sh -x ../script-sv-filt-wm  $ll  150  > out-script-sv-filt-wm-$ll   2>&1
+  cd ..
+done
