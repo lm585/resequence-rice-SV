@@ -25,6 +25,7 @@ svFilterDelNNNNNN.2  $1.3sv.simple   /home/linyong/data-link/rice-v7-all-chro-mi
 # samtools view -o temp  2_FCH9U14ADXX_L1_wHAIPI014969-45.pair.noDup.norm.mapQgt16.bam
 samtools view -o ../$1.pair.noDup.norm.mapQgt16.sam     ../$1.pair.noDup.norm.mapQgt16.bam
 # apply ratio filter Only to insertions
+# for other applications, usually the ratio filter used in deletion, inversion
 awk 'BEGIN {FS = "\t"} $17 == "INSERTION" ' $1.3sv.simple.DELnnn.filt > temp-insertion
 awk 'BEGIN {FS = "\t"} $17 != "INSERTION" ' $1.3sv.simple.DELnnn.filt > temp-others
 normal-abnom-ratio-window.2.useMap  ../$1.pair.noDup.norm.mapQgt16.sam   temp-insertion   0.2 $2 # may be trimmed read length
