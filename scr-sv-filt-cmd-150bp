@@ -1,4 +1,4 @@
-#
+# NIV
 cat  pre-names  | while read ll
 do
   cd dir-sv-$ll
