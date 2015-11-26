@@ -1,0 +1,16 @@
+
+#
+cat  pre-names pre-names-RUF | while read ll
+do
+  cd dir-sv-$ll
+  t=`echo "$ll" | grep "^RUF_" | wc -l `
+  if [ $t -eq 1 ]
+  then
+    len=80
+  else
+    len=101
+  fi
+  echo $len
+  sh -x  /home/linyong/data-link/NIV/script-sv-filt-wm  $ll $len  > out-script-sv-filt-wm-$ll   2>&1
+  cd ..
+done
