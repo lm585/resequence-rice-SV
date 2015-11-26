@@ -5,3 +5,16 @@ do
   sh -x ../script-sv-filt-wm  $ll  150  > out-script-sv-filt-wm-$ll   2>&1
   cd ..
 done
+
+
+
+# NIV trimmed to 80 bp
+# a different script file
+#
+cat  pre-names-sanger-80bp | while read ll
+do
+  cd dir-sv-$ll
+  sh -x ../script-sv-filt-wm  $ll  80  > out-script-sv-filt-wm-$ll   2>&1
+  cd ..
+done
+
