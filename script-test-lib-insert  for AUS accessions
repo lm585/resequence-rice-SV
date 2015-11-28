@@ -9,5 +9,5 @@ do
   #grep "^+ bwa sampe -f "  out-script-pairSam-snp   -A 10 | head -11 | awk '$0 ~ /bwa sampe/' | grep -o "[^    ][^     ]*\.sam" > temp-1
   echo "$ll.pair.sam" > temp-1
   paste  temp-1 temp-2  temp-3
-  cd ..
+  cd .. 
 done
