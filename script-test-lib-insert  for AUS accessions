@@ -1,0 +1,13 @@
+
+# get library size avg, std, for aus accessions
+
+ls | grep IRIS |  while read ll
+do
+  cd $ll
+  grep "^+ bwa sampe -f "  out-script-pairSam-snp   -A 10 | head -11 | awk '$0 ~ / inferred external isize from/ {print $8+0.5 "\t" $10+0.5}'  | sed 's/\.[0-9]*//g' > temp-2
+  grep "^+ bwa sampe -f "  out-script-pairSam-snp   -A 10 | head -11 | awk '/inferred maximum ins/ {print $6}' > temp-3
+  #grep "^+ bwa sampe -f "  out-script-pairSam-snp   -A 10 | head -11 | awk '$0 ~ /bwa sampe/' | grep -o "[^    ][^     ]*\.sam" > temp-1
+  echo "$ll.pair.sam" > temp-1
+  paste  temp-1 temp-2  temp-3
+  cd ..
+done
