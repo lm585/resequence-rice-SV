@@ -1,0 +1,77 @@
+
+#
+for f in `cat dir-names-aus | head -1` ## all 83-bp read
+do
+  cd $f
+  echo $f
+  #fq-list
+  sortBam=""
+  for fq in `cat fq-list `
+  do
+    sortBam="$sortBam $fq.pair.sorted.bam"
+  done
+  samtools merge -f all.bam $sortBam
+
+  samtools sort -n all.bam  $f.pair
+  rm all.bam
+  samtools view -h -o $f.pair.sam  $f.pair.bam
+  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 3 # edit dist -n 3 for 83-bp read
+  awk '$2 != 99 && $2 != 147 && $2 != 83 && $2 != 163'  $f.pair.noDup.sam >  $f.pair.noDup.ab.sam
+  awk '!($2 != 99 && $2 != 147 && $2 != 83 && $2 != 163)'  $f.pair.noDup.sam >  $f.pair.noDup.norm.sam
+  a=`grep "^$f.pair.sam" ../44bp-size-std-max | awk '{print $2 - 1 - ($4 - $2)}'`
+  # 10_FCH9U14ADXX_L1_wHAIPI014976-67.pair.sam      478     17      589
+  # a=478-1-(589-478); a: avg-6sigm
+  # is a still greater than 0
+  b="-$a"
+  awk '$9 <= '$a'  && $9 >= '$b' ' $f.pair.noDup.norm.sam  >> $f.pair.noDup.ab.sam  # out of 6sigma , abnormal pirs
+  awk '!($9 <= '$a'  && $9 >= '$b')' $f.pair.noDup.norm.sam > temp #within 6sigma, normal pairs
+  mv temp $f.pair.noDup.norm.sam
+  awk '$5 > 16 '  $f.pair.noDup.norm.sam  > $f.pair.noDup.norm.mapQgt16.sam
+  a=`grep "^$f.pair.sam" ../44bp-size-std-max | awk '{print $2 - 3 * $3}'`
+  c=`grep "^$f.pair.sam" ../44bp-size-std-max | awk '{print $2 + 3 * $3}'`
+  if [ $a -le 0 ]
+  then
+    a=0
+  fi
+  b="-$a"
+  d="-$c"
+  awk '($9 >= '$a' && $9 <= '$c' ) || ($9 >= '$d' && $9 <= '$b')' $f.pair.noDup.norm.mapQgt16.sam > temp
+  mv temp $f.pair.noDup.norm.mapQgt16.sam #within 3 sigma, normal pair
+  awk '$5 > 16 {print $1}'  $f.pair.noDup.ab.sam   | sort | uniq -d > temp-uniq-sort-id
+  sort -t '     '  +0 -1  $f.pair.noDup.ab.sam  > temp-sorted.sam
+  join -t '     '  -1 1  temp-uniq-sort-id -2 1 temp-sorted.sam > $f.pair.noDup.ab.mapQgt16.sam
+  rm  temp-uniq-sort-id  temp-sorted.sam
+  rm $f.pair.noDup.ab.sam $f.pair.noDup.norm.sam $f.pair.noDup.sam  $f.pair.sam $f.pair.bam
+  samtools view -b -S -t /home/linyong/data-link/rice-v7-all-chro-mito.con.fai -o $f.pair.noDup.norm.mapQgt16.bam  $f.pair.noDup.norm.mapQgt16.sam
+  rm $f.pair.noDup.norm.mapQgt16.sam
+  mv $f.pair.noDup.ab.mapQgt16.sam ../
+  mv $f.pair.noDup.norm.mapQgt16.bam ../
+  cd ..
+ ### produce sv link
+ sam="$f.pair.noDup.ab.mapQgt16.sam"
+ resDir="dir-sv-$f"
+ u=`grep "^$f.pair.sam" 44bp-size-std-max | awk '{print $2}'`
+ s=`grep "^$f.pair.sam" 44bp-size-std-max | awk '{print $3}'`
+ awk 'BEGIN {FS = "="; OFS = "=";
+             ws = 2 * '$u' + 2 * 1.414 * '$s' + 0.5;
+             step = ws / 4.0 + 0.5}
+     { if($1 == "mates_file")
+         print $1, "'$sam' ";
+       else if ($1 == "output_dir")
+         print $1, "'$resDir'";
+       else if ($1 == "window_size")
+         printf("%s=%d\n", $1, ws);
+       else if ($1 == "step_length")
+         printf("%s=%d\n", $1, step);
+       else if ($1 == "mu_length")
+         print $1, "'$u'";
+       else if ($1 == "sigma_length")
+         print $1, "'$s'";
+       else
+         print $0;
+     }' sv.conf > $f.sv.conf
+
+ /home/linyong/BTI-my-document-1-26-2015/bin/SVDetect   linking         filtering   -conf $f.sv.conf  > $f-out-svdetect 2>&1
+done
+
+
