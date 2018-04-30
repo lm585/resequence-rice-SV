@@ -1,0 +1,3 @@
+44bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 1
+75bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 2
+90bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 3
