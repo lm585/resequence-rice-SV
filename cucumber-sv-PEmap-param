@@ -1,3 +1,9 @@
 44bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 1
 75bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 2
 90bp  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 3
+
+the following param obtained from /home/linyong/BTI-SV-pindel/cucumber-vs-chinese-long-copy/dir-from-penguin; 
+
+param="-n 1 -o 1 -e 0 "
+
+param="-n 3 -o 1 -e 1 
